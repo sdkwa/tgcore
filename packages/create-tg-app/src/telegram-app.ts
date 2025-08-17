@@ -1,5 +1,5 @@
 import type { AxiosInstance, AxiosProxyConfig } from 'axios'
-import type { ITelegramApp, TelegramApp, TelegramAppCredentials } from './telegram-app.types'
+import type { ITelegramApp, TelegramApp, TelegramAppAuthParams, TelegramAppCredentials } from './telegram-app.types'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { TelegramAppRoutes } from './telegram-app.types'
@@ -18,6 +18,18 @@ export class TelegramAppClient implements ITelegramApp {
         })
     }
 
+    private cookieName = 'stel_token'
+
+    private getCookieValue(cookiesArray: Array<string>, cookieName: string) {
+        for (const cookieStr of cookiesArray) {
+            const cookie = cookieStr.split(';')[0].trim()
+            if (cookie.startsWith(`${cookieName}=`)) {
+                return cookie.split('=')[1]
+            }
+        }
+        return null
+    }
+
     private normalizePhoneNumber(input: string) {
         input = input.trim().replace(/[+()\s-]/g, '')
         if (!input.match(/^\d+$/)) throw new Error('Invalid phone number')
@@ -30,20 +42,14 @@ export class TelegramAppClient implements ITelegramApp {
         const res = await this._client.post(
             TelegramAppRoutes.SEND_PASSWORD,
             { phone },
-            { headers: { 'Content-Type': 'multipart/form-data' } },
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' } },
         )
         return res.data.random_hash
     }
 
     async createTelegramApp(
         token: string,
-        appParams: {
-            appTitle: string
-            appShortname: string
-            appUrl: string
-            appPlatform: string
-            appDescription: string
-        },
+        appParams: TelegramApp,
     ): Promise<TelegramApp> {
         const resultHtml = await this._client.get(TelegramAppRoutes.APPS, {
             headers: { Cookie: `stel_token=${token}` },
@@ -51,16 +57,28 @@ export class TelegramAppClient implements ITelegramApp {
         const $ = cheerio.load(resultHtml.data)
         const hash = $('input[name="hash"]').val()
 
-        const appData = {
-            app_title: appParams.appTitle,
-            app_shortname: appParams.appShortname,
-            app_url: appParams.appUrl,
-            app_platform: appParams.appPlatform,
-            app_dsc: appParams.appDescription,
+        const res = await this._client.post(TelegramAppRoutes.CREATE_APP, {
+            ...appParams,
+            hash,
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Cookie': `stel_token=${token}`,
+            },
+        })
+
+        if (typeof res.data === 'string') {
+            const stringResult = res.data.toLowerCase()
+            if (stringResult.includes('incorrect') || stringResult.includes('error')) {
+                throw new Error(stringResult)
+            }
+
+            if (stringResult.trim().length === 0) {
+                return appParams
+            }
         }
 
-        await this._client.post(TelegramAppRoutes.CREATE_APP, { ...appData, hash })
-        return appData
+        return appParams
     }
 
     async getTelegramAppCredentials(token: string): Promise<TelegramAppCredentials> {
@@ -89,14 +107,18 @@ export class TelegramAppClient implements ITelegramApp {
             }
         }
 
-        if (!result.apiId || !result.apiHash) {
-            throw new Error("Couldn't find apiId or apiHash. Try again")
+        if (!result.apiId) {
+            throw new Error("Couldn't find apiId. Try again")
+        }
+
+        if (!result.apiHash) {
+            throw new Error("Couldn't find apiHash. Try again")
         }
 
         return result
     }
 
-    async signInTelegramApps(params: { phone: string, random_hash: string, code: string }): Promise<string> {
+    async signInTelegramApps(params: TelegramAppAuthParams): Promise<string> {
         const phoneNumber = this.normalizePhoneNumber(params.phone)
         const res = await this._client.post(
             TelegramAppRoutes.AUTH,
@@ -105,17 +127,24 @@ export class TelegramAppClient implements ITelegramApp {
                 random_hash: params.random_hash,
                 password: params.code,
             },
-            { headers: { 'Content-Type': 'multipart/form-data' } },
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' } },
         )
 
         if (res.data === 'Invalid confirmation code!') {
             throw new Error('Invalid confirmation code or hash')
         }
 
-        const cookie = res.headers['set-cookie']
-        if (!cookie) {
+        const cookies = res.headers['set-cookie']
+        if (!cookies) {
             throw new Error("Not found 'Set-Cookie' on response headers")
         }
-        return cookie[0]
+
+        const cookie = this.getCookieValue(cookies, this.cookieName)
+
+        if (!cookie) {
+            throw new Error('Not found needed cookie')
+        }
+
+        return cookie
     }
 }
