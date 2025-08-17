@@ -1,3 +1,3 @@
 # @mtcute/create-tg-app
 
-Automated creation of telegram applications for mtcute
+Automated creation of telegram applications
