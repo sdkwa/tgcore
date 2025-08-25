@@ -37,7 +37,7 @@ export class TelegramAppClient implements ITelegramApp {
         return input
     }
 
-    async sendConfirmatioCodeTelegramApps(phoneNumber: string): Promise<string | null> {
+    async sendConfirmationCode(phoneNumber: string): Promise<string | null> {
         const phone = this.normalizePhoneNumber(phoneNumber)
         const res = await this._client.post(
             TelegramAppRoutes.SEND_PASSWORD,
@@ -47,7 +47,7 @@ export class TelegramAppClient implements ITelegramApp {
         return res.data.random_hash
     }
 
-    async createTelegramApp(
+    async createApp(
         token: string,
         appParams: TelegramApp,
     ): Promise<TelegramApp> {
@@ -81,7 +81,7 @@ export class TelegramAppClient implements ITelegramApp {
         return appParams
     }
 
-    async getTelegramAppCredentials(token: string): Promise<TelegramAppCredentials> {
+    async getCredentials(token: string): Promise<TelegramAppCredentials> {
         const resultHtml = await this._client.get(TelegramAppRoutes.APPS, {
             headers: { Cookie: `stel_token=${token}` },
         })
@@ -118,7 +118,7 @@ export class TelegramAppClient implements ITelegramApp {
         return result
     }
 
-    async signInTelegramApps(params: TelegramAppAuthParams): Promise<string> {
+    async signIn(params: TelegramAppAuthParams): Promise<string> {
         const phoneNumber = this.normalizePhoneNumber(params.phone)
         const res = await this._client.post(
             TelegramAppRoutes.AUTH,

@@ -67,7 +67,7 @@ export interface ITelegramApp {
      *   - `string` containing the random password hash required for my.telegram.org login on success,
      *   - `null` if the request fails (e.g., invalid phone number or network error).
      */
-    sendConfirmatioCodeTelegramApps(phoneNumber: string): Promise<string | null>
+    sendConfirmationCode(phoneNumber: string): Promise<string | null>
 
     /**
      * Creates a Telegram application with the specified parameters.
@@ -78,7 +78,7 @@ export interface ITelegramApp {
      *   - `"ERROR"` or `"Invalid ..."` if any field value is invalid (per Telegram API rules),
      *   - The created `TelegramApp` object on success.
      */
-    createTelegramApp(token: string, appParams: TelegramApp): Promise<TelegramApp>
+    createApp(token: string, appParams: TelegramApp): Promise<TelegramApp>
 
     /**
      * Retrieves credentials for the created Telegram app.
@@ -90,10 +90,10 @@ export interface ITelegramApp {
      *   - Token is invalid or expired
      *   - Credentials cannot be retrieved
      */
-    getTelegramAppCredentials(token: string): Promise<TelegramAppCredentials>
+    getCredentials(token: string): Promise<TelegramAppCredentials>
 
     /**
      * Authenticates a user on my.telegram.org to obtain session cookies.
      */
-    signInTelegramApps(params: TelegramAppAuthParams): Promise<string | null>
+    signIn(params: TelegramAppAuthParams): Promise<string | null>
 }

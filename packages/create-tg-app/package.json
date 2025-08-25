@@ -1,10 +1,10 @@
 {
-  "name": "@mtcute/create-tg-app",
+  "name": "@sdkwa/tgcore-create-tg-app",
   "type": "module",
   "version": "0.0.1",
   "private": true,
   "description": "Automated creation of telegram applications for mtcute",
-  "author": "fourappy <fourappy@gmail.com>",
+  "author": "sdkwa <sdkwa@sdkwa.pro>",
   "license": "MIT",
   "sideEffects": false,
   "exports": "./src/index.ts",
@@ -12,7 +12,6 @@
     "vitest": "*"
   },
   "dependencies": {
-    "@mtcute/core": "workspace:^",
     "axios": "^1.11.0",
     "cheerio": "1.0.0-rc.12"
   },
