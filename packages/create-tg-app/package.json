@@ -1,7 +1,7 @@
 {
   "name": "@sdkwa/tgcore-create-tg-app",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "Automated creation of telegram applications for mtcute",
   "author": "sdkwa <sdkwa@sdkwa.pro>",
